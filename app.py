@@ -14,14 +14,9 @@ from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
 import toml
 
-# Read secrets from the TOML file
-secrets = toml.load("secrets.toml")
-openai_api_key = secrets['secrets']['OPENAI_API_KEY']
-api_token = secrets['secrets']['API_TOKEN']
-
-# Use the variables in your Streamlit app
-st.write(f"OPENAI_API_KEY: {openai_api_key}")
-st.write(f"API_TOKEN: {api_token}")
+# Access the API keys
+openai.api_key = os.getenv('OPENAI_API_KEY')
+api_token = os.getenv('API_TOKEN')
 
 # Establish tabs for the site
 tabs = st.sidebar.radio("Select a tab", ( 'CareerProphet', 'JobProphet'))
