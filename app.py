@@ -12,9 +12,18 @@ from PyPDF2 import PdfReader
 import requests
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv())
+import toml
 
+# Read secrets from the TOML file
+secrets = toml.load("secrets.toml")
+openai_api_key = secrets['secrets']['OPENAI_API_KEY']
+api_token = secrets['secrets']['API_TOKEN']
 
+# Use the variables in your Streamlit app
+st.write(f"OPENAI_API_KEY: {openai_api_key}")
+st.write(f"API_TOKEN: {api_token}")
 
+# Establish tabs for the site
 tabs = st.sidebar.radio("Select a tab", ( 'CareerProphet', 'JobProphet'))
 
 # Main content
@@ -72,22 +81,17 @@ monster_df = load_data('data/processed/monster_jobs.csv')
 #Find Your Perfect Career Sector tab
 
 #This tab utilizes a pre-trained machine learning model,
- #which has been pickled after being trained on a comprehensive dataset of job descriptions. 
- #The model's objective is to predict career sectors based on user-provided interests. 
+#which has been pickled after being trained on a comprehensive dataset of job descriptions. 
+#The model's objective is to predict career sectors based on user-provided interests. 
 ##Additionally, it presents insightful visualizations derived from the predicted sectors, 
 #showcasing common job titles and prevalent locations associated with those sectors.
-
-
 if tabs == 'CareerProphet':
-   
 
     # Load the model and initialize TfidfVectorizer
     filename = 'models/finalized_model.sav'
     filename2 = 'models/finalized_vector.sav'
     loaded_model = pickle.load(open(filename, 'rb'))
     loaded_vector = pickle.load(open(filename2,'rb'))
-
-   
 
     # Define functions for text preprocessing
     def make_lower(a_string):
@@ -165,17 +169,14 @@ if tabs == 'CareerProphet':
 
         
        ###MAKE PIE CHARTS FOR PREDICTED SECTORS 
-       
-      
         sector_df = filtered_df[filtered_df['sector'] == selected_sector]
         states_count = sector_df['location_state'].value_counts().head(10)
         fig_pie = px.pie(values=states_count.values, names=states_count.index, title=f"Top 10 States in '{selected_sector}'")
         st.plotly_chart(fig_pie)
 
-   
-                # Display top 10 job titles in each predicted sector
+        # Display top 10 job titles in each predicted sector
         st.subheader("Top 10 :red[Job Titles] in Predicted :red[Sector]")
-           
+
         top_jobs = filtered_df[filtered_df['sector'] == selected_sector]['job_title'].value_counts().head(10)
         st.write(f"Top 10 Job Titles in '{selected_sector}':")
 
@@ -190,16 +191,6 @@ if tabs == 'CareerProphet':
                     truncated_desc = ' '.join(desc_words)
                     st.write(f"Description {idx}: {truncated_desc}...")
 
-       
-
-                
-                        
-
-
-        
-
-        
-
 #JobProphet tab
 
 #This tab offers a multifaceted functionality by accepting user inputs in the form of a job description and a PDF resume.
@@ -210,14 +201,11 @@ if tabs == 'CareerProphet':
 #The combination of these functionalities facilitates a comprehensive understanding of job trends while utilizing 
 #cutting-edge AI models for resume classification and career suggestion generation.
 
-
-
 elif tabs == 'JobProphet':
     API_URL = "https://api-inference.huggingface.co/models/runaksh/ResumeClassification_distilBERT"
     API_TOKEN = os.getenv('API_TOKEN')  
     openai.api_key  = os.getenv('OPENAI_API_KEY')
     client = OpenAI()
-   
 
     st.subheader('Resume classifier 	:memo: and Cover Letter Generator 	:printer:')
     with st.expander("See explanation 	:hibiscus:"):
@@ -225,14 +213,13 @@ elif tabs == 'JobProphet':
     
     job_desc = st.text_area("Copy paste the job description you're interested in")
 
-   
     uploaded_file = st.file_uploader("Upload your resume", type=["pdf"])
     
-     #extract text from pdf
+    #extract text from pdf
     if uploaded_file is not None:
         st.write("File uploaded successfully! ")
         text = extract_text_from_pdf(uploaded_file)
-       
+
     # query to send the resume content to the hugging face Inference API 
     def query(payload):
         response = requests.post(API_URL, headers={"Authorization": f"Bearer {API_TOKEN}"}, json=payload)
@@ -270,10 +257,9 @@ elif tabs == 'JobProphet':
                 st.download_button('Download cover letter :envelope_with_arrow:', answer)
                 st.markdown(f'<div class="cover-letter">{answer}</div>', unsafe_allow_html=True)
                     
-   # displays visualizations by gender, ethnicity, race
+    # displays visualizations by gender, ethnicity, race
     if st.checkbox("Visualize Job Trends 	:bar_chart: :chart_with_upwards_trend:"):
-               
-               
+
                 st.header(":rainbow[Job Trends by demographics,] :red[Target City: NYC]")
             
                 selected_factor = st.selectbox('Select a factor', ['gender', 'ethnicity', 'race'])
